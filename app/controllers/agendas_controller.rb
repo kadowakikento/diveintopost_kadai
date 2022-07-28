@@ -1,5 +1,5 @@
 class AgendasController < ApplicationController
-  # before_action :set_agenda, only: %i[show edit update destroy]
+  before_action :set_agenda, only: %i[show edit update destroy]
 
   def index
     @agendas = Agenda.all
@@ -20,6 +20,20 @@ class AgendasController < ApplicationController
       render :new
     end
   end
+
+  def destroy
+    @agenda = Agenda.find(params[:id])
+    if current_user == @agenda.user || current_user == @agenda.team.owner
+    @agenda.destroy
+    redirect_to dashboard_url, notice: "アジェンダを削除しました"
+    @keep_team_id = @agenda.team_id
+    user_emails = User.where(keep_team_id: @keep_team_id).pluck(:email)
+    user_emails.each do |emails|
+      AgendaMailer.agenda_mail(emails).deliver
+      end
+    end
+  end
+
 
   private
 
